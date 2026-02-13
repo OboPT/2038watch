@@ -45,48 +45,54 @@
     .counters {
       display: flex;
       flex-wrap: wrap;
-      gap: 2.5rem;
+      gap: 2.2rem;
       justify-content: center;
     }
 
     .counter {
       text-align: center;
-      min-width: 220px;
+      min-width: 200px;
     }
 
     .number {
-      font-size: 5.5rem;
+      font-size: 5.2rem;
       font-weight: 600;
       line-height: 1;
-      color: #e0f2fe;
       letter-spacing: -2px;
       margin-bottom: 0.4rem;
       background: linear-gradient(90deg, #c084fc, #a5b4fc);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      transition: all 0.7s ease-out;
+      transition: transform 0.4s ease;
       display: inline-block;
-      min-width: 120px; /* evita saltos de ancho al cambiar dígitos */
+      min-width: 140px;
+    }
+
+    .number.changed {
+      transform: scale(1.06);
     }
 
     .label {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 400;
       color: #94a3b8;
       text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: 1.4px;
+    }
+
+    @media (max-width: 900px) {
+      .counters { gap: 1.8rem; }
     }
 
     @media (max-width: 768px) {
       h1 { font-size: 2.4rem; }
-      .number { font-size: 4.5rem; }
-      .counters { gap: 2rem; }
-      .counter { min-width: 180px; }
+      .number { font-size: 4.2rem; }
+      .counter { min-width: 160px; }
     }
 
     @media (max-width: 500px) {
-      .counters { flex-direction: column; gap: 2.2rem; }
-      .number { font-size: 5rem; }
+      .counters { flex-direction: column; gap: 2rem; }
+      .number { font-size: 4.8rem; min-width: 180px; }
     }
   </style>
 </head>
@@ -112,17 +118,21 @@
       <div class="label">Días</div>
     </div>
 
+    <div class="counter">
+      <div class="number" id="minutes">0</div>
+      <div class="label">Minutos</div>
+    </div>
+
   </div>
 
   <script>
-    // Fecha objetivo
     const targetDate = new Date("2038-12-09T00:00:00").getTime();
 
-    // Objeto para guardar los valores actuales mostrados (para animar solo cuando cambian)
     const displayed = {
       years: 0,
       months: 0,
-      days: 0
+      days: 0,
+      minutes: 0
     };
 
     function animateNumber(element, start, end, duration = 1200) {
@@ -143,6 +153,8 @@
           requestAnimationFrame(step);
         } else {
           element.textContent = end.toLocaleString('es-ES');
+          element.classList.add('changed');
+          setTimeout(() => element.classList.remove('changed'), 600);
         }
       };
 
@@ -154,40 +166,51 @@
       const distance = targetDate - now;
 
       if (distance < 0) {
-        if (displayed.years !== 0)  animateNumber(document.getElementById("years"),  displayed.years,  0);
-        if (displayed.months !== 0) animateNumber(document.getElementById("months"), displayed.months, 0);
-        if (displayed.days !== 0)   animateNumber(document.getElementById("days"),   displayed.days,   0);
+        const zero = 0;
+        if (displayed.years  !== zero) animateNumber(document.getElementById("years"),  displayed.years,  zero);
+        if (displayed.months !== zero) animateNumber(document.getElementById("months"), displayed.months, zero);
+        if (displayed.days   !== zero) animateNumber(document.getElementById("days"),   displayed.days,   zero);
+        if (displayed.minutes!== zero) animateNumber(document.getElementById("minutes"),displayed.minutes,zero, 800);
         
-        displayed.years = displayed.months = displayed.days = 0;
+        displayed.years = displayed.months = displayed.days = displayed.minutes = zero;
         return;
       }
 
-      const totalDays = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const totalMs    = distance;
+      const totalDays  = Math.floor(totalMs / (1000 * 60 * 60 * 24));
+      const totalMin   = Math.floor(totalMs / (1000 * 60));
+
       const years  = Math.floor(totalDays / 365.25);
       const months = Math.floor(totalDays / 30.437);
 
-      // Animar solo si el valor cambió
+      // Animar solo si cambió el valor
       if (years !== displayed.years) {
-        animateNumber(document.getElementById("years"), displayed.years, years);
+        animateNumber(document.getElementById("years"), displayed.years, years, 1400);
         displayed.years = years;
       }
 
       if (months !== displayed.months) {
-        animateNumber(document.getElementById("months"), displayed.months, months);
+        animateNumber(document.getElementById("months"), displayed.months, months, 1200);
         displayed.months = months;
       }
 
       if (totalDays !== displayed.days) {
-        animateNumber(document.getElementById("days"), displayed.days, totalDays, 1800);
+        animateNumber(document.getElementById("days"), displayed.days, totalDays, 1600);
         displayed.days = totalDays;
+      }
+
+      // Minutos se actualizan con más frecuencia → animación más corta
+      if (totalMin !== displayed.minutes) {
+        animateNumber(document.getElementById("minutes"), displayed.minutes, totalMin, 900);
+        displayed.minutes = totalMin;
       }
     }
 
-    // Primera ejecución inmediata
+    // Iniciar inmediatamente
     updateCounter();
 
-    // Luego cada 15 segundos (suficiente para esta escala de tiempo)
-    setInterval(updateCounter, 15000);
+    // Actualizar cada ~8 segundos (suficiente para ver los minutos pasar sin recarga excesiva)
+    setInterval(updateCounter, 8000);
   </script>
 
 </body>
