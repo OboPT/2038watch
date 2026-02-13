@@ -64,6 +64,9 @@
       background: linear-gradient(90deg, #c084fc, #a5b4fc);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      transition: all 0.7s ease-out;
+      display: inline-block;
+      min-width: 120px; /* evita saltos de ancho al cambiar dígitos */
     }
 
     .label {
@@ -75,28 +78,15 @@
     }
 
     @media (max-width: 768px) {
-      h1 {
-        font-size: 2.4rem;
-      }
-      .number {
-        font-size: 4.5rem;
-      }
-      .counters {
-        gap: 2rem;
-      }
-      .counter {
-        min-width: 180px;
-      }
+      h1 { font-size: 2.4rem; }
+      .number { font-size: 4.5rem; }
+      .counters { gap: 2rem; }
+      .counter { min-width: 180px; }
     }
 
     @media (max-width: 500px) {
-      .counters {
-        flex-direction: column;
-        gap: 2.2rem;
-      }
-      .number {
-        font-size: 5rem;
-      }
+      .counters { flex-direction: column; gap: 2.2rem; }
+      .number { font-size: 5rem; }
     }
   </style>
 </head>
@@ -125,34 +115,79 @@
   </div>
 
   <script>
-    // Fecha objetivo: 9 de diciembre de 2038 a las 00:00
+    // Fecha objetivo
     const targetDate = new Date("2038-12-09T00:00:00").getTime();
+
+    // Objeto para guardar los valores actuales mostrados (para animar solo cuando cambian)
+    const displayed = {
+      years: 0,
+      months: 0,
+      days: 0
+    };
+
+    function animateNumber(element, start, end, duration = 1200) {
+      if (start === end) {
+        element.textContent = end.toLocaleString('es-ES');
+        return;
+      }
+
+      let startTime = null;
+      const step = (timestamp) => {
+        if (!startTime) startTime = timestamp;
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        const current = Math.floor(progress * (end - start) + start);
+        
+        element.textContent = current.toLocaleString('es-ES');
+
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        } else {
+          element.textContent = end.toLocaleString('es-ES');
+        }
+      };
+
+      requestAnimationFrame(step);
+    }
 
     function updateCounter() {
       const now = new Date().getTime();
       const distance = targetDate - now;
 
       if (distance < 0) {
-        document.getElementById("years").textContent  = "0";
-        document.getElementById("months").textContent = "0";
-        document.getElementById("days").textContent   = "0";
+        if (displayed.years !== 0)  animateNumber(document.getElementById("years"),  displayed.years,  0);
+        if (displayed.months !== 0) animateNumber(document.getElementById("months"), displayed.months, 0);
+        if (displayed.days !== 0)   animateNumber(document.getElementById("days"),   displayed.days,   0);
+        
+        displayed.years = displayed.months = displayed.days = 0;
         return;
       }
 
       const totalDays = Math.floor(distance / (1000 * 60 * 60 * 24));
-
-      // Aproximaciones comunes y legibles
       const years  = Math.floor(totalDays / 365.25);
       const months = Math.floor(totalDays / 30.437);
 
-      document.getElementById("years").textContent  = years;
-      document.getElementById("months").textContent = months;
-      document.getElementById("days").textContent   = totalDays.toLocaleString('es-ES');
+      // Animar solo si el valor cambió
+      if (years !== displayed.years) {
+        animateNumber(document.getElementById("years"), displayed.years, years);
+        displayed.years = years;
+      }
+
+      if (months !== displayed.months) {
+        animateNumber(document.getElementById("months"), displayed.months, months);
+        displayed.months = months;
+      }
+
+      if (totalDays !== displayed.days) {
+        animateNumber(document.getElementById("days"), displayed.days, totalDays, 1800);
+        displayed.days = totalDays;
+      }
     }
 
-    // Actualizar al cargar y cada 10 segundos (suficiente para estas unidades)
+    // Primera ejecución inmediata
     updateCounter();
-    setInterval(updateCounter, 10000);
+
+    // Luego cada 15 segundos (suficiente para esta escala de tiempo)
+    setInterval(updateCounter, 15000);
   </script>
 
 </body>
