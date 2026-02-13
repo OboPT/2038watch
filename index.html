@@ -15,58 +15,65 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
     }
 
     h1 {
-      font-size: 2.8rem;
-      margin-bottom: 0.8rem;
+      font-size: 2.6rem;
+      margin: 0.4rem 0 0.3rem;
       color: #a5b4fc;
     }
 
     .subtitle {
-      font-size: 1.3rem;
+      font-size: 1.25rem;
       margin-bottom: 2.5rem;
       opacity: 0.85;
     }
 
-    .countdown {
+    .clocks {
       display: flex;
-      gap: 20px;
-      font-size: 1.4rem;
+      flex-wrap: wrap;
+      gap: 24px;
+      justify-content: center;
+      max-width: 1100px;
     }
 
-    .box {
-      background: rgba(30, 30, 60, 0.7);
+    .clock {
+      background: rgba(30, 30, 60, 0.65);
       border: 1px solid #4f46e5;
-      border-radius: 12px;
-      padding: 18px 28px;
-      min-width: 110px;
+      border-radius: 16px;
+      padding: 24px 36px;
+      min-width: 260px;
       text-align: center;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(5px);
     }
 
-    .number {
-      font-size: 3.8rem;
+    .value {
+      font-size: 4.2rem;
       font-weight: bold;
       color: #c7d2fe;
       line-height: 1;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
-    .label {
-      font-size: 1rem;
+    .unit {
+      font-size: 1.4rem;
       color: #a5b4fc;
       opacity: 0.9;
     }
 
-    @media (max-width: 500px) {
-      .countdown {
+    @media (max-width: 700px) {
+      .clocks {
         flex-direction: column;
-        gap: 16px;
+        gap: 20px;
       }
-      .box {
-        min-width: 160px;
-        padding: 20px;
+      .clock {
+        min-width: 220px;
+        padding: 20px 30px;
+      }
+      .value {
+        font-size: 3.6rem;
       }
       h1 {
         font-size: 2.2rem;
@@ -79,59 +86,55 @@
   <h1>Contagem Regressiva</h1>
   <div class="subtitle">até 9 de dezembro de 2038</div>
 
-  <div class="countdown">
-    <div class="box">
-      <div class="number" id="days">0</div>
-      <div class="label">dias</div>
+  <div class="clocks">
+
+    <div class="clock">
+      <div class="value" id="years">0</div>
+      <div class="unit">anos</div>
     </div>
-    
-    <div class="box">
-      <div class="number" id="hours">00</div>
-      <div class="label">horas</div>
+
+    <div class="clock">
+      <div class="value" id="months">0</div>
+      <div class="unit">meses (aprox.)</div>
     </div>
-    
-    <div class="box">
-      <div class="number" id="minutes">00</div>
-      <div class="label">minutos</div>
+
+    <div class="clock">
+      <div class="value" id="days">0</div>
+      <div class="unit">dias</div>
     </div>
-    
-    <div class="box">
-      <div class="number" id="seconds">00</div>
-      <div class="label">segundos</div>
-    </div>
+
   </div>
 
   <script>
-    // Data alvo: 9 de dezembro de 2038 às 00:00 (podes ajustar a hora se quiseres)
+    // Data alvo: 9 de dezembro de 2038 às 00:00
     const targetDate = new Date("2038-12-09T00:00:00").getTime();
 
     function updateCountdown() {
       const now = new Date().getTime();
       const distance = targetDate - now;
 
-      // Se já passou a data
       if (distance < 0) {
-        document.getElementById("days").textContent = "0";
-        document.getElementById("hours").textContent = "00";
-        document.getElementById("minutes").textContent = "00";
-        document.getElementById("seconds").textContent = "00";
+        document.getElementById("years").textContent  = "0";
+        document.getElementById("months").textContent = "0";
+        document.getElementById("days").textContent   = "0";
         return;
       }
 
-      const days    = Math.floor(distance / (1000 * 60 * 60 * 24));
-      const hours   = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+      // Dias totais exatos
+      const totalDays = Math.floor(distance / (1000 * 60 * 60 * 24));
 
-      document.getElementById("days").textContent    = days;
-      document.getElementById("hours").textContent   = String(hours).padStart(2, "0");
-      document.getElementById("minutes").textContent = String(minutes).padStart(2, "0");
-      document.getElementById("seconds").textContent = String(seconds).padStart(2, "0");
+      // Aproximações simples (muito usadas em contagens regressivas grandes)
+      const yearsApprox  = Math.floor(totalDays / 365.25);           // 365.25 → considera ano bissexto médio
+      const monthsApprox = Math.floor(totalDays / 30.437);           // média de dias por mês no calendário gregoriano
+
+      document.getElementById("years").textContent  = yearsApprox;
+      document.getElementById("months").textContent = monthsApprox;
+      document.getElementById("days").textContent   = totalDays;
     }
 
-    // Atualiza imediatamente e depois a cada segundo
+    // Inicia imediatamente e atualiza a cada 5 segundos (não precisa ser a cada segundo para estas unidades)
     updateCountdown();
-    setInterval(updateCountdown, 1000);
+    setInterval(updateCountdown, 5000);
   </script>
 
 </body>
